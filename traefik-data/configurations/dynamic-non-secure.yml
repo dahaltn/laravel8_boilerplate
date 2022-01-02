@@ -1,0 +1,7 @@
+# dynamic.yml
+http:
+  middlewares:
+    user-auth:
+      basicAuth:
+        users:
+          - "dahal:$apr1$EzfamRIl$r3W2mbPM0SuHxY1FY/hp20"

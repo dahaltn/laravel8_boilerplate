@@ -1,0 +1,49 @@
+# This is a basic workflow that is triggered on push to main
+
+name: server_deployment
+
+# Uncomment below if you want to trigger on push
+#on:
+#  push:
+#    branches: [main]
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Deploy the Laravel8 app'
+        required: true
+        default: ''
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checking out
+        if: success() || failure()
+        uses: actions/checkout@v2
+        with:
+          ref: main
+
+      - name: Copy files to remote server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.APP_SERVER_IP }}
+          username: ${{ secrets.APP_SERVER_USER }}
+          key: ${{ secrets.APP_KEY }}
+          port: 22
+          source: .
+          target: ${{ secrets.APP_SETUP_FOLDER }}
+
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.APP_SERVER_IP }}
+          username: ${{ secrets.APP_SERVER_USER }}
+          key: ${{ secrets.APP_KEY }}
+          port: 22
+          script: |
+            cd ${{ secrets.APP_SETUP_FOLDER }}
+            chmod +x build.sh
+            sh ./build.sh

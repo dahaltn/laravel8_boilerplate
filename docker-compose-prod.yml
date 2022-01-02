@@ -1,0 +1,87 @@
+version: '3.4'
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik-data/traefik.yml:/traefik.yml:ro
+      - ./traefik-data/acme.json:/acme.json
+      - ./traefik-data/configurations:/configurations
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=app-network"
+      - "traefik.http.routers.traefik-secure.entrypoints=websecure"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.example.com`)"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+      - "traefik.http.routers.traefik-secure.middlewares=user-auth@file"
+    networks:
+      - app-network
+  #PHP Service
+  app:
+    build:
+      context: ./laravel
+      dockerfile: Dockerfile
+    image: laravel8_voilerplate:latest
+    container_name: app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./laravel:/var/www
+      - ./php/php.ini-production:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  #Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./laravel:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=app-network"
+      - "traefik.http.routers.web-secure.entrypoints=websecure"
+      - "traefik.http.routers.web-secure.rule=Host(`example.com`)"
+
+  #MySQL Service
+  db:
+    image: mysql:5.7.22
+    container_name: db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: newnew
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - ./mysql/mysql.cnf:/etc/mysql/mysql.cnf
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+    external: true
+#Volumes
+volumes:
+  dbdata:
+    driver: local
