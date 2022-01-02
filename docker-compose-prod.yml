@@ -56,6 +56,8 @@ services:
       - "traefik.docker.network=app-network"
       - "traefik.http.routers.web-secure.entrypoints=websecure"
       - "traefik.http.routers.web-secure.rule=Host(`example.com`)"
+#        Uncomment below to enable wildcard subdomain which handles by nginx/laravel.
+#      - "traefik.http.routers.web.rule=HostRegexp(`{subdomain:[a-z0-9]+}.app.example.com`)"
 
   #MySQL Service
   db:

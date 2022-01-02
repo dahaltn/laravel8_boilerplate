@@ -54,7 +54,8 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=app-network"
       - "traefik.http.routers.web.entrypoints=web"
-      - "traefik.http.routers.web.rule=Host(`local.laravel`)"
+#      - "traefik.http.routers.web.rule=HostRegexp:{subdomain:[a-z]+}.local.laravel}"
+      - "traefik.http.routers.web.rule=HostRegexp(`{subdomain:[a-z0-9]+}.app.local.laravel`)"
 
   #MySQL Service
   db:

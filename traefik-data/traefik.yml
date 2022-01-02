@@ -17,6 +17,8 @@ entryPoints:
         - secureHeaders@file
       tls:
         certResolver: letsencrypt
+        domains:
+          - main:
 
 providers:
   docker:
