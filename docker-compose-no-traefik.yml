@@ -1,25 +1,5 @@
 version: '3.4'
 services:
-  traefik:
-    image: traefik:latest
-    container_name: traefik
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik-data/traefik.yml:/traefik.yml:ro
-      - ./traefik-data/configurations:/configurations
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=app-network"
-      - "traefik.http.routers.traefik.entrypoints=web"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.example.com`)"
-      - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.middlewares=user-auth@file"
-    networks:
-      - app-network
   #PHP Service
   php:
     build:
@@ -35,7 +15,7 @@ services:
     working_dir: /var/www
     volumes:
       - ./web:/var/www
-      - ./php/php-production.ini:/usr/local/etc/php/conf.d/local.ini
+      - ./php/php-development.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
       - app-network
 
@@ -50,11 +30,9 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
     networks:
       - app-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=app-network"
-      - "traefik.http.routers.web.entrypoints=web"
-      - "traefik.http.routers.web.rule=HostRegexp(`{subdomain:[a-z0-9]+}.laravel.example.com`, `laravel.example.com`, `example.com`)"
+    ports:
+      - 80:80
+      - 443:443
 
   #MySQL Service
   db:
@@ -85,11 +63,13 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=app-network"
       - "traefik.http.routers.adminer.entrypoints=web"
-      - "traefik.http.routers.adminer.rule=Host(`adminer.example.com`)"
+      - "traefik.http.routers.adminer.rule=Host(`adminer.app.local`)"
     environment:
       ADMINER_PLUGINS: 'tables-filter tinymce'
     networks:
       - app-network
+    ports:
+      - 8080:8080
 
   # Redis
   redis:
@@ -105,7 +85,7 @@ services:
 networks:
   app-network:
     driver: bridge
-    external: true
+    external: false
 #Volumes
 volumes:
   dbdata:

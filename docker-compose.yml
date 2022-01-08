@@ -15,27 +15,27 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=app-network"
       - "traefik.http.routers.traefik.entrypoints=web"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.local.laravel`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.app.local`)"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.middlewares=user-auth@file"
     networks:
       - app-network
   #PHP Service
-  app:
+  php:
     build:
-      context: ./laravel
-      dockerfile: Dockerfile
-    image: laravel8_voilerplate:latest
-    container_name: app
+      context: ./docker_files
+      dockerfile: php.dockerfile
+    image: dahaltn/php-fpm:8.1
+    container_name: php
     restart: unless-stopped
     tty: true
     environment:
-      SERVICE_NAME: app
+      SERVICE_NAME: php
       SERVICE_TAGS: dev
     working_dir: /var/www
     volumes:
-      - ./laravel:/var/www
-      - ./php/php.ini-development:/usr/local/etc/php/conf.d/local.ini
+      - ./web:/var/www
+      - ./php/php-development.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
       - app-network
 
@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
     tty: true
     volumes:
-      - ./laravel:/var/www
+      - ./web:/var/www
       - ./nginx/conf.d:/etc/nginx/conf.d
     networks:
       - app-network
@@ -54,8 +54,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=app-network"
       - "traefik.http.routers.web.entrypoints=web"
-#      - "traefik.http.routers.web.rule=HostRegexp:{subdomain:[a-z]+}.local.laravel}"
-      - "traefik.http.routers.web.rule=HostRegexp(`{subdomain:[a-z0-9]+}.app.local.laravel`)"
+      - "traefik.http.routers.web.rule=HostRegexp(`{subdomain:[a-z0-9]+}.laravel.app.local`, `laravel.app.local`, `app.local`)"
 
   #MySQL Service
   db:
@@ -67,7 +66,9 @@ services:
       - "3306:3306"
     environment:
       MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: newnew
+      MYSQL_USER: lara
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: P@ssword
       SERVICE_TAGS: dev
       SERVICE_NAME: mysql
     volumes:
@@ -75,6 +76,30 @@ services:
       - ./mysql/mysql.cnf:/etc/mysql/mysql.cnf
     networks:
       - app-network
+
+  adminer:
+    image: adminer:latest
+    restart: always
+    container_name: adminer
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=app-network"
+      - "traefik.http.routers.adminer.entrypoints=web"
+      - "traefik.http.routers.adminer.rule=Host(`adminer.app.local`)"
+    environment:
+      ADMINER_PLUGINS: 'tables-filter tinymce'
+    networks:
+      - app-network
+
+# Redis
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    networks:
+      -  app-network
 
 #Docker Networks
 networks:
