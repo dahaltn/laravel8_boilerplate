@@ -56,7 +56,9 @@ services:
       - "traefik.docker.network=app-network"
       - "traefik.http.routers.web.entrypoints=web"
       - "traefik.http.routers.web.rule=HostRegexp(`{subdomain:[a-z0-9]+}.laravel.example.com`, `laravel.example.com`, `example.com`)"
-
+    depends_on:
+      - db
+      - php
   #MySQL Service
   db:
     image: mysql:5.7.22
@@ -91,6 +93,8 @@ services:
       ADMINER_PLUGINS: 'tables-filter tinymce'
     networks:
       - app-network
+    depends_on:
+      - db
 
   # Redis
   redis:
