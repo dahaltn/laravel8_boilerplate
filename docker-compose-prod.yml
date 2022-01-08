@@ -11,6 +11,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik-data/traefik.yml:/traefik.yml:ro
       - ./traefik-data/configurations:/configurations
+      - ./traefik-data/acme.json:/acme.json
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=app-network"
